@@ -1,0 +1,27 @@
+{
+  "name": "safespace-ug",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "backend"
+  ],
+  "scripts": {
+    "dev:awareness":      "npm run dev --workspace=apps/public-awareness-platform",
+    "dev:reporting":      "npm run dev --workspace=apps/reporting-portal",
+    "dev:participation":  "npm run dev --workspace=apps/participation-portal",
+    "dev:committee":      "npm run dev --workspace=apps/committee-dashboard",
+    "dev:auth":           "npm run dev --workspace=apps/ug-spacespace-auth-app",
+    "dev:backend":        "docker compose -f backend/docker-compose.yml up --build",
+    "dev:backend:detach": "docker compose -f backend/docker-compose.yml up --build -d",
+    "db:migrate":         "docker compose -f backend/docker-compose.yml --profile migrate run --rm migrate",
+    "db:stop":            "docker compose -f backend/docker-compose.yml down",
+    "db:studio":          "npm run db:studio --workspace=backend",
+    "build:all":          "npm run build --workspaces --if-present",
+    "lint:all":           "npm run lint --workspaces --if-present"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "moduleResolution": "bundler",
+    "module": "ESNext",
+    "strict": true,
+    "exactOptionalPropertyTypes": false,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "paths": {
+      "@safespace/types":     ["./packages/types/src/index.ts"],
+      "@safespace/utils":     ["./packages/utils/src/index.ts"],
+      "@safespace/workflows": ["./packages/workflows/src/index.ts"],
+      "@safespace/security":  ["./packages/security/src/index.ts"],
+      "@safespace/api":       ["./packages/api/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "**/node_modules", "**/.next", "**/dist"]
+}
