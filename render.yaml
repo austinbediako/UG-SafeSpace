@@ -36,14 +36,6 @@ services:
         generateValue: true
       - key: SESSION_SECRET
         generateValue: true
-      - key: STORAGE_ENDPOINT
-        value: https://storage.googleapis.com  # Update with your S3/MinIO endpoint
-      - key: STORAGE_BUCKET
-        value: safespace-ug-evidence
-      - key: STORAGE_ACCESS_KEY
-        sync: false  # Set manually in Render dashboard
-      - key: STORAGE_SECRET_KEY
-        sync: false  # Set manually in Render dashboard
       - key: SMTP_HOST
         value: smtp.gmail.com  # Update with your SMTP provider
       - key: SMTP_PORT
@@ -55,17 +47,17 @@ services:
       - key: SMTP_FROM
         value: noreply@safespace-ug.com
       - key: CORS_ORIGINS
-        value: https://safespace-ug-auth.onrender.com,https://safespace-ug-dashboard.onrender.com,https://safespace-ug-portal.onrender.com
+        value: https://ug-safe-space-ug-spacespace-auth-ap.vercel.app,https://ug-safe-space-committee-dashboard.vercel.app,https://ug-safe-space-public-awareness-plat.vercel.app,https://ug-safe-space-reporting-portal.vercel.app,https://ug-safe-space-participation-portal.vercel.app
       - key: AUTH_APP_URL
-        value: https://safespace-ug-auth.onrender.com
+        value: https://ug-safe-space-ug-spacespace-auth-ap.vercel.app
       - key: REPORTING_PORTAL_URL
-        value: https://safespace-ug-reporting.onrender.com
+        value: https://ug-safe-space-reporting-portal.vercel.app
       - key: PARTICIPATION_PORTAL_URL
-        value: https://safespace-ug-portal.onrender.com
+        value: https://ug-safe-space-participation-portal.vercel.app
       - key: COMMITTEE_DASHBOARD_URL
-        value: https://safespace-ug-dashboard.onrender.com
+        value: https://ug-safe-space-committee-dashboard.vercel.app
       - key: PUBLIC_PLATFORM_URL
-        value: https://safespace-ug.onrender.com
+        value: https://ug-safe-space-public-awareness-plat.vercel.app
       - key: LOG_LEVEL
         value: info
 
