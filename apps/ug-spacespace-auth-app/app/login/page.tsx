@@ -91,7 +91,7 @@ function LoginForm() {
         <div className="mb-8 flex flex-col items-center gap-3 lg:hidden">
           <div className="flex h-16 w-16 items-center justify-center bg-[#153D6F]">
             <Image
-              src="/UG-white-logo (1).png"
+              src="/UG-white-logo.png"
               alt="University of Ghana"
               width={44}
               height={44}

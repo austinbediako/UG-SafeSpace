@@ -34,7 +34,7 @@ export default function ForgotPasswordPage() {
       <div className="hidden lg:flex lg:w-[420px] flex-col justify-between bg-[#153D6F] px-12 py-14 shrink-0">
         <div className="flex flex-col gap-6">
           <Image
-            src="/UG-white-logo (1).png"
+            src="/UG-white-logo.png"
             alt="University of Ghana"
             width={80}
             height={80}
@@ -65,7 +65,7 @@ export default function ForgotPasswordPage() {
         <div className="mb-8 flex flex-col items-center gap-3 lg:hidden">
           <div className="flex h-16 w-16 items-center justify-center bg-[#153D6F]">
             <Image
-              src="/UG-white-logo (1).png"
+              src="/UG-white-logo.png"
               alt="University of Ghana"
               width={44}
               height={44}
