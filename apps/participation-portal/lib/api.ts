@@ -116,7 +116,7 @@ export async function requestUploadUrl(params: {
   type: string;
   description: string;
   evidenceDate?: string;
-}): Promise<{ uploadUrl: string; storageKey: string }> {
+}): Promise<{ evidenceId: string; uploadUrl: string; storageKey: string }> {
   const { caseId, ...body } = params;
   return apiFetch(`/cases/${caseId}/evidence/upload-url`, {
     method: "POST",
