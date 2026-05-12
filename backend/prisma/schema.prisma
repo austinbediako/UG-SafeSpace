@@ -1,0 +1,728 @@
+// ─── SafeSpace UG — Database Schema ──────────────────────────────────────────
+// PostgreSQL via Prisma ORM.
+// This schema models the complete institutional case management lifecycle.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users ───────────────────────────────────────────────────────────────────
+
+enum SystemRole {
+  COMPLAINANT
+  RESPONDENT
+  COMMITTEE_MEMBER
+  COMMITTEE_CHAIR
+  INVESTIGATOR
+  SECRETARY
+  ADMIN
+}
+
+enum Affiliation {
+  UNDERGRADUATE
+  POSTGRADUATE
+  FACULTY
+  ADMINISTRATIVE_STAFF
+  TECHNICAL_STAFF
+  EXTERNAL
+}
+
+model User {
+  id            String      @id @default(uuid())
+  email         String      @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  systemRole    SystemRole  @default(COMPLAINANT)
+  affiliation   Affiliation
+  department    String?
+  staffId       String?
+  studentId     String?
+  isActive      Boolean     @default(true)
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  caseParticipations  CaseParticipant[]
+  notifications       Notification[]
+  sessions            Session[]
+  auditEventsAsActor  AuditEvent[]        @relation("AuditActor")
+
+  @@index([email])
+  @@index([systemRole])
+}
+
+// ─── Sessions ────────────────────────────────────────────────────────────────
+
+model Session {
+  id            String    @id @default(uuid())
+  userId        String
+  refreshToken  String    @unique
+  userAgent     String?
+  ipAddress     String?
+  expiresAt     DateTime
+  createdAt     DateTime  @default(now())
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([refreshToken])
+}
+
+// ─── Complaints (pre-case intake) ────────────────────────────────────────────
+// A complaint is the raw submission. It becomes a Case after committee
+// acknowledgment. Rejected complaints remain as records but are never promoted.
+
+enum ComplaintStatus {
+  PENDING_REVIEW
+  ACKNOWLEDGED
+  REJECTED
+  PROMOTED_TO_CASE
+}
+
+model Complaint {
+  id                    String            @id @default(uuid())
+  reference             String            @unique  // Format: UG-YYYY-XXXX
+  status                ComplaintStatus   @default(PENDING_REVIEW)
+
+  // Report classification
+  reportType            ReportType
+  misconductType        MisconductType
+  misconductDescription String
+
+  // Complainant details
+  isAnonymous           Boolean           @default(false)
+  complainantUserId     String?           // null if anonymous
+  complainantAffiliation Affiliation
+  complainantDepartment String?
+  complainantStudentStaffId String?
+  trackingToken         String?           @unique  // For anonymous reporters
+
+  // Incident details
+  incidentDate          DateTime?
+  incidentLocation      String?
+  incidentDescription   String
+
+  // Respondent details (as provided by complainant)
+  respondentName        String
+  respondentStudentStaffId String?
+  respondentDepartment  String
+  respondentAffiliation String
+  respondentRelationship String?
+
+  // Supporting information
+  witnessInformation    String?
+  priorReportMade       Boolean           @default(false)
+  priorReportDetails    String?
+  evidenceDescription   String?
+
+  // Consent
+  consentToProcess      Boolean           @default(true)
+
+  // Lifecycle
+  submittedAt           DateTime          @default(now())
+  acknowledgedAt        DateTime?
+  rejectedAt            DateTime?
+  rejectionReason       String?
+  promotedToCaseId      String?           @unique
+
+  // Relation to promoted case
+  promotedCase          Case?             @relation("ComplaintToCase")
+
+  @@index([reference])
+  @@index([complainantUserId])
+  @@index([trackingToken])
+  @@index([status])
+}
+
+// ─── Cases ───────────────────────────────────────────────────────────────────
+
+enum CaseStage {
+  INTAKE
+  ACKNOWLEDGMENT
+  RESPONDENT_NOTIFICATION
+  RESPONSE_WINDOW
+  INVESTIGATION
+  HEARING_PREPARATION
+  HEARING
+  DELIBERATION
+  DECISION
+  APPEAL_WINDOW
+  APPEAL_REVIEW
+  CLOSED
+}
+
+enum CaseStatus {
+  OPEN
+  UNDER_REVIEW
+  AWAITING_RESPONSE
+  IN_INVESTIGATION
+  HEARING_SCHEDULED
+  PENDING_DECISION
+  DECIDED
+  APPEALED
+  CLOSED
+  WITHDRAWN
+}
+
+enum ReportType {
+  FORMAL
+  INFORMAL
+}
+
+enum MisconductType {
+  SEXUAL_HARASSMENT
+  SEXUAL_ASSAULT
+  STALKING
+  COERCION
+  DISCRIMINATION
+  INTIMIDATION
+  QUID_PRO_QUO
+  RETALIATION
+  OTHER
+}
+
+enum CasePriority {
+  STANDARD
+  HIGH
+  URGENT
+}
+
+model Case {
+  id                    String        @id @default(uuid())
+  reference             String        @unique  // Same as complaint reference
+  stage                 CaseStage     @default(INTAKE)
+  status                CaseStatus    @default(OPEN)
+  priority              CasePriority  @default(STANDARD)
+
+  // Classification (inherited from complaint)
+  reportType            ReportType
+  misconductType        MisconductType
+  misconductDescription String
+
+  // Complainant info (denormalized for query performance)
+  isAnonymous           Boolean       @default(false)
+  complainantAffiliation Affiliation
+  complainantDepartment String?
+
+  // Respondent info (as submitted)
+  respondentName        String
+  respondentDepartment  String
+  respondentRole        String?
+
+  // Incident
+  incidentDate          DateTime?
+  incidentLocation      String?
+  incidentDescription   String
+
+  // Witnesses
+  witnessInformation    String?
+  priorReportMade       Boolean       @default(false)
+  priorReportDetails    String?
+
+  // Respondent response
+  respondentResponse    String?
+  respondentResponseAt  DateTime?
+
+  // Investigation
+  assignedInvestigatorId String?
+
+  // Key timestamps
+  submittedAt           DateTime      @default(now())
+  acknowledgedAt        DateTime?
+  respondentNotifiedAt  DateTime?
+  investigationStartedAt DateTime?
+  closedAt              DateTime?
+  updatedAt             DateTime      @updatedAt
+
+  // Source complaint
+  complaintId           String?       @unique
+  complaint             Complaint?    @relation("ComplaintToCase", fields: [complaintId], references: [id])
+
+  // Relations
+  participants          CaseParticipant[]
+  evidence              Evidence[]
+  deadlines             Deadline[]
+  hearings              Hearing[]
+  decision              Decision?
+  appeal                Appeal?
+  auditEvents           AuditEvent[]
+  notifications         Notification[]
+  formalNotices         FormalNotice[]
+  stageTransitions      StageTransition[]
+
+  @@index([reference])
+  @@index([stage])
+  @@index([status])
+  @@index([assignedInvestigatorId])
+  @@index([submittedAt])
+}
+
+// ─── Case Participants ───────────────────────────────────────────────────────
+// Links users to cases with their role in THAT case.
+// A user can have different roles in different cases.
+
+enum ParticipantRole {
+  COMPLAINANT
+  RESPONDENT
+  WITNESS
+  REPRESENTATIVE
+  INVESTIGATOR
+  PANEL_MEMBER
+  PANEL_CHAIR
+  OBSERVER
+}
+
+enum RepresentativeType {
+  LEGAL_COUNSEL
+  SUPPORT_PERSON
+  UNION_REPRESENTATIVE
+  ACADEMIC_ADVISOR
+}
+
+model CaseParticipant {
+  id                  String              @id @default(uuid())
+  caseId              String
+  userId              String
+  role                ParticipantRole
+
+  // Representative-specific
+  representativeType  RepresentativeType?
+  representsUserId    String?             // Which party they represent
+  approvedByCommittee Boolean             @default(false)
+  approvedAt          DateTime?
+  approvedBy          String?
+
+  isActive            Boolean             @default(true)
+  addedAt             DateTime            @default(now())
+  addedBy             String?             // userId of who added them
+  removedAt           DateTime?
+
+  case                Case                @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  user                User                @relation(fields: [userId], references: [id])
+
+  @@unique([caseId, userId, role])
+  @@index([caseId])
+  @@index([userId])
+  @@index([role])
+}
+
+// ─── Stage Transitions (audit trail for workflow) ────────────────────────────
+
+model StageTransition {
+  id            String      @id @default(uuid())
+  caseId        String
+  fromStage     CaseStage
+  toStage       CaseStage
+  transitionedBy String    // userId
+  reason        String?
+  transitionedAt DateTime  @default(now())
+
+  case          Case        @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([transitionedAt])
+}
+
+// ─── Evidence ────────────────────────────────────────────────────────────────
+
+enum EvidenceStatus {
+  PENDING_UPLOAD
+  UPLOADED
+  UNDER_REVIEW
+  ACCEPTED
+  REJECTED
+  REDACTED
+}
+
+enum EvidenceType {
+  DOCUMENT
+  IMAGE
+  AUDIO
+  VIDEO
+  SCREENSHOT
+  CORRESPONDENCE
+  STATEMENT
+  OTHER
+}
+
+model Evidence {
+  id                      String          @id @default(uuid())
+  caseId                  String
+  submittedByUserId       String
+  submittedByRole         ParticipantRole
+
+  type                    EvidenceType
+  filename                String
+  mimeType                String
+  sizeBytes               Int
+  storageKey              String          // Object key in S3/MinIO
+
+  description             String
+  evidenceDate            DateTime?
+  source                  String?
+
+  status                  EvidenceStatus  @default(PENDING_UPLOAD)
+  reviewedByUserId        String?
+  reviewedAt              DateTime?
+  rejectionReason         String?
+
+  // Hearing record admission
+  enteredIntoHearingRecord Boolean        @default(false)
+  hearingId               String?
+
+  // Chain of custody
+  checksumSha256          String?         // Integrity verification
+  uploadConfirmedAt       DateTime?
+
+  submittedAt             DateTime        @default(now())
+
+  case                    Case            @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([submittedByUserId])
+  @@index([status])
+}
+
+// ─── Deadlines ───────────────────────────────────────────────────────────────
+
+enum DeadlineType {
+  ACKNOWLEDGMENT
+  RESPONDENT_RESPONSE
+  INVESTIGATION
+  HEARING_NOTICE
+  APPEAL_FILING
+  CUSTOM
+}
+
+enum DeadlineStatus {
+  PENDING
+  ACTIVE
+  APPROACHING
+  BREACHED
+  EXTENDED
+  COMPLETED
+  WAIVED
+}
+
+model Deadline {
+  id                    String          @id @default(uuid())
+  caseId                String
+  type                  DeadlineType
+  status                DeadlineStatus  @default(ACTIVE)
+
+  label                 String
+  description           String?
+
+  // Timing
+  startedAt             DateTime
+  dueAt                 DateTime
+  workingDaysAllowed    Int
+  urgencyThresholdDays  Int             @default(3)
+
+  // Extension
+  extensionGranted      Boolean         @default(false)
+  extensionDays         Int?
+  extensionGrantedBy    String?
+  extensionGrantedAt    DateTime?
+  extensionReason       String?
+  originalDueAt         DateTime?
+
+  // Completion
+  completedAt           DateTime?
+  completedBy           String?
+
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  case                  Case            @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([dueAt])
+  @@index([status])
+  @@index([type])
+}
+
+// ─── Hearings ────────────────────────────────────────────────────────────────
+
+enum HearingStatus {
+  SCHEDULED
+  POSTPONED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum HearingType {
+  PRELIMINARY
+  FULL_HEARING
+  APPEAL_HEARING
+}
+
+model Hearing {
+  id                String          @id @default(uuid())
+  caseId            String
+  type              HearingType
+  status            HearingStatus   @default(SCHEDULED)
+
+  // Scheduling
+  scheduledAt       DateTime
+  scheduledBy       String
+  venue             String
+  isVirtual         Boolean         @default(false)
+  virtualLink       String?
+
+  // Panel
+  panelChairId      String
+  panelMemberIds    String[]
+
+  // Evidence admitted
+  admittedEvidenceIds String[]
+
+  // Outcome
+  completedAt       DateTime?
+  outcomeSummary    String?
+  recordedBy        String?
+  proceedToDeliberation Boolean?
+  adjournedTo       DateTime?
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  case              Case            @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  parties           HearingParty[]
+  postponements     HearingPostponement[]
+
+  @@index([caseId])
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+model HearingParty {
+  id                  String    @id @default(uuid())
+  hearingId           String
+  userId              String
+  role                ParticipantRole
+  notifiedAt          DateTime?
+  confirmedAttendance Boolean?
+  attended            Boolean?
+
+  hearing             Hearing   @relation(fields: [hearingId], references: [id], onDelete: Cascade)
+
+  @@unique([hearingId, userId])
+  @@index([hearingId])
+}
+
+model HearingPostponement {
+  id              String    @id @default(uuid())
+  hearingId       String
+  originalDate    DateTime
+  newDate         DateTime
+  reason          String
+  postponedBy     String
+  postponedAt     DateTime  @default(now())
+
+  hearing         Hearing   @relation(fields: [hearingId], references: [id], onDelete: Cascade)
+
+  @@index([hearingId])
+}
+
+// ─── Decisions ───────────────────────────────────────────────────────────────
+
+enum DecisionOutcome {
+  UPHELD
+  PARTIALLY_UPHELD
+  DISMISSED
+  WITHDRAWN
+  REFERRED
+}
+
+model Decision {
+  id                String           @id @default(uuid())
+  caseId            String           @unique
+  outcome           DecisionOutcome
+  summary           String
+  fullText          String
+  sanctionsOrdered  Boolean          @default(false)
+  sanctionDetails   String?
+  panelMemberIds    String[]
+  issuedBy          String           // userId of chair
+  issuedAt          DateTime         @default(now())
+
+  case              Case             @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+}
+
+// ─── Appeals ─────────────────────────────────────────────────────────────────
+
+enum AppealStatus {
+  FILED
+  UNDER_REVIEW
+  UPHELD
+  DISMISSED
+  WITHDRAWN
+}
+
+model Appeal {
+  id                    String        @id @default(uuid())
+  caseId                String        @unique
+  filedByUserId         String
+  groundsForAppeal      String
+  supportingEvidenceIds String[]
+
+  status                AppealStatus  @default(FILED)
+  reviewedByUserId      String?
+  outcome               String?
+  outcomeIssuedAt       DateTime?
+
+  filedAt               DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  case                  Case          @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([filedByUserId])
+}
+
+// ─── Notifications ───────────────────────────────────────────────────────────
+
+enum NotificationType {
+  CASE_SUBMITTED
+  CASE_ACKNOWLEDGED
+  RESPONDENT_NOTIFIED
+  RESPONSE_RECEIVED
+  DEADLINE_APPROACHING
+  DEADLINE_BREACHED
+  HEARING_SCHEDULED
+  HEARING_REMINDER
+  DECISION_ISSUED
+  APPEAL_FILED
+  APPEAL_RESOLVED
+  CASE_CLOSED
+  EVIDENCE_SUBMITTED
+  INVESTIGATOR_ASSIGNED
+  REPRESENTATIVE_APPROVED
+  GENERAL
+}
+
+model Notification {
+  id              String            @id @default(uuid())
+  recipientUserId String
+  caseId          String?
+  caseReference   String?
+  type            NotificationType
+  title           String
+  body            String
+
+  isRead          Boolean           @default(false)
+  readAt          DateTime?
+
+  actionUrl       String?
+  actionLabel     String?
+
+  createdAt       DateTime          @default(now())
+
+  recipient       User              @relation(fields: [recipientUserId], references: [id], onDelete: Cascade)
+  case            Case?             @relation(fields: [caseId], references: [id], onDelete: SetNull)
+
+  @@index([recipientUserId, isRead])
+  @@index([caseId])
+  @@index([createdAt])
+}
+
+// ─── Formal Notices ──────────────────────────────────────────────────────────
+
+enum FormalNoticeType {
+  COMPLAINT_ACKNOWLEDGMENT
+  RESPONDENT_NOTIFICATION
+  HEARING_NOTICE
+  DECISION_NOTICE
+  APPEAL_ACKNOWLEDGMENT
+  APPEAL_OUTCOME
+}
+
+enum DeliveryMethod {
+  EMAIL
+  IN_PLATFORM
+  PHYSICAL
+  BOTH
+}
+
+model FormalNotice {
+  id                String            @id @default(uuid())
+  caseId            String
+  noticeType        FormalNoticeType
+  recipientUserIds  String[]
+  subject           String
+  body              String
+
+  issuedAt          DateTime          @default(now())
+  issuedBy          String
+  deliveryMethod    DeliveryMethod    @default(IN_PLATFORM)
+
+  deliveredAt       DateTime?
+  acknowledgedAt    DateTime?
+  acknowledgedBy    String?
+
+  documentStorageKey String?          // PDF version in storage
+
+  case              Case              @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([noticeType])
+}
+
+// ─── Audit Events ────────────────────────────────────────────────────────────
+
+enum AuditEventType {
+  CASE_CREATED
+  STAGE_TRANSITIONED
+  EVIDENCE_UPLOADED
+  EVIDENCE_ACCESSED
+  RESPONSE_SUBMITTED
+  HEARING_SCHEDULED
+  DECISION_RENDERED
+  APPEAL_FILED
+  USER_ACCESSED_CASE
+  DOCUMENT_DOWNLOADED
+  INVESTIGATOR_ASSIGNED
+  DEADLINE_EXTENDED
+  CASE_CLOSED
+  LOGIN_SUCCESS
+  LOGIN_FAILURE
+  PASSWORD_RESET
+  USER_CREATED
+  PERMISSION_DENIED
+}
+
+model AuditEvent {
+  id            String          @id @default(uuid())
+  caseId        String?
+  type          AuditEventType
+  actorUserId   String?
+  actorRole     String?         // CaseParticipantRole or "SYSTEM"
+
+  summary       String
+  detail        String?
+  metadata      Json?
+
+  ipAddress     String?
+  userAgent     String?
+
+  occurredAt    DateTime        @default(now())
+
+  case          Case?           @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  actor         User?           @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([caseId])
+  @@index([actorUserId])
+  @@index([type])
+  @@index([occurredAt])
+}
