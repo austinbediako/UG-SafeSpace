@@ -20,6 +20,7 @@ async function backendFetch<T>(
   const body = (await res.json()) as ApiResponse<T>;
 
   if (!res.ok) {
+    console.error(`backendFetch error for ${path}: ${res.status} ${res.statusText}`, body);
     const msg = body.error?.message ?? `Request failed: ${res.status}`;
     throw new Error(msg);
   }

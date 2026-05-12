@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
       sessionId: result.sessionId,
     });
   } catch (err: unknown) {
+    console.error("Login API route error:", err);
     const message = err instanceof Error ? err.message : "Login failed";
     return NextResponse.json({ error: message }, { status: 401 });
   }
