@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-roboto);
+
+  --color-ug-navy: #153D6F;
+  --color-ug-gold: #c8962b;
+  --color-ug-gold-light: #e8b84b;
+  --color-surface: #f0f4fb;
+  --color-card: #ffffff;
+}
