@@ -2,7 +2,19 @@ import Redis from "ioredis";
 import { env } from "./env.js";
 import { logger } from "./logger.js";
 
-export const redis = new Redis(env.REDIS_URL, {
+// Render Redis generates connection strings with 'default' username which fails in some ioredis configurations
+let redisUrl = env.REDIS_URL;
+try {
+  const parsedUrl = new URL(redisUrl);
+  if (parsedUrl.username === "default") {
+    parsedUrl.username = "";
+    redisUrl = parsedUrl.toString();
+  }
+} catch (e) {
+  // If parsing fails, fall back to the original string
+}
+
+export const redis = new Redis(redisUrl, {
   maxRetriesPerRequest: 3,
   retryStrategy(times) {
     const delay = Math.min(times * 50, 2000);

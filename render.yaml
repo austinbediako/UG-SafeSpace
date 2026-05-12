@@ -10,7 +10,7 @@ services:
     region: oregon
     buildCommand: |
       npm install -g pnpm@9 && \
-      pnpm install && \
+      PRISMA_SKIP_POSTINSTALL_GENERATE=true pnpm install && \
       cd backend && \
       npx prisma generate && \
       pnpm run build && \
