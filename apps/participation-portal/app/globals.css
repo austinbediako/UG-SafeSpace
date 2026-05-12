@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+@source "../components/**/*.{ts,tsx}";
+@source "../lib/**/*.{ts,tsx}";
+
+:root {
+  /* UG Brand Colors */
+  --ug-blue: #153D6F;
+  --ug-blue-dark: #0e2a50;
+  --ug-blue-deep: #153D6C;
+  --ug-blue-mid: #1e5096;
+  --ug-blue-light: #2a6aad;
+  --ug-blue-pale: #e8eef8;
+  --ug-gold: #c8962b;
+  --ug-gold-light: #e8b84b;
+  --ug-gold-pale: #fdf5e0;
+  --ug-gold-dark: #9a6f1a;
+
+  /* Surface */
+  --background: #ffffff;
+  --surface: #f8f7f4;
+  --surface-alt: #f0ede6;
+  --surface-blue: #f0f4fb;
+
+  /* Borders */
+  --border: #dddad3;
+  --border-strong: #b8b4aa;
+
+  /* Text */
+  --foreground: #0a1628;
+  --text-primary: #0a1628;
+  --text-secondary: #2d3f5e;
+  --text-muted: #6b7a99;
+  --text-on-blue: #ffffff;
+  --text-gold-on-blue: #e8b84b;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-ug-blue: var(--ug-blue);
+  --color-ug-blue-dark: var(--ug-blue-dark);
+  --color-ug-blue-deep: var(--ug-blue-deep);
+  --color-ug-blue-mid: var(--ug-blue-mid);
+  --color-ug-blue-light: var(--ug-blue-light);
+  --color-ug-blue-pale: var(--ug-blue-pale);
+
+  --color-ug-gold: var(--ug-gold);
+  --color-ug-gold-light: var(--ug-gold-light);
+  --color-ug-gold-pale: var(--ug-gold-pale);
+  --color-ug-gold-dark: var(--ug-gold-dark);
+
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
+  --color-surface-blue: var(--surface-blue);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  --font-sans: var(--font-roboto), Arial, Helvetica, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-roboto), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ug-gold);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
