@@ -27,28 +27,28 @@ The Public Awareness platform is the front door of the system. It is designed to
 ### Key Pages & Findings
 - **Homepage:** Clean, institutional, yet approachable. Prominently features definitions, rights, and the reporting entry point. Includes scroll-reveal animations that load smoothly as the user browses down the page.
 
-  ![Homepage - Top](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/awareness_home_part1.png)
+  ![Homepage - Top](./screenshots/awareness_home_part1.png)
 
-  ![Homepage - Scroll Section 1](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/awareness_home_part2.png)
+  ![Homepage - Scroll Section 1](./screenshots/awareness_home_part2.png)
 
-  ![Homepage - Scroll Section 2](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/awareness_home_part4.png)
+  ![Homepage - Scroll Section 2](./screenshots/awareness_home_part4.png)
 
-  ![Homepage - Bottom](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/awareness_home_part10.png)
+  ![Homepage - Bottom](./screenshots/awareness_home_part10.png)
 - **Policy Summary:** Clearly abstracts the complex legal jargon from the 2017 policy into readable chunks.
 
-  ![About Policy](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/phase1_about-policy.png)
+  ![About Policy](./screenshots/phase1_about-policy.png)
 - **Reporting Guide & Rights:** Steps the user through the 60-day investigation timeline and their rights (representation, protection against retaliation).
 
-  ![Reporting Guide](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/phase1_reporting-guide.png)
+  ![Reporting Guide](./screenshots/phase1_reporting-guide.png)
 
-  ![Your Rights](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/phase1_your-rights.png)
+  ![Your Rights](./screenshots/phase1_your-rights.png)
 - **Definitions, FAQ & Support:**
 
-  ![Definitions](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/phase1_definitions.png)
+  ![Definitions](./screenshots/phase1_definitions.png)
 
-  ![FAQ](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/phase1_faq.png)
+  ![FAQ](./screenshots/phase1_faq.png)
 
-  ![Support Resources](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/phase1_support-resources.png)
+  ![Support Resources](./screenshots/phase1_support-resources.png)
 
 > [!TIP]
 > **UX Verdict:** The public site fulfills its purpose beautifully. The UI feels warm, not clinical. Navigation is intuitive and straightforward.
@@ -64,7 +64,7 @@ The Reporting Portal handles the highly sensitive intake of complaints.
 - **Intake Flow:** Guides the complainant through formal vs. informal reporting, evidence upload, and respondent identification.
 - **Anonymity Controls:** The ability to submit anonymously is explicitly integrated. If checked, the identity is not linked, generating a secure Case Reference ID instead.
 
-  ![Reporting Home](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/phase2_home.png)
+  ![Reporting Home](./screenshots/phase2_home.png)
 
 > [!IMPORTANT]
 > **Policy Check:** The 7-day notification window to the respondent formally starts the moment a report successfully posts through this intake form. 
@@ -80,11 +80,11 @@ Serving as the unified authentication gate for the Participation Portal and the 
 - **Testing Users:** Successfully tested using seeded users (e.g., `ama.mensah@ug.edu.gh` as staff, `esi.quartey@st.ug.edu.gh` as student).
 - **Flows:** Registration, Login, and Forgot Password correctly route and display appropriate form elements.
 
-  ![Auth Login](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/phase3_login.png)
+  ![Auth Login](./screenshots/phase3_login.png)
 
-  ![Auth Register](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/phase3_register.png)
+  ![Auth Register](./screenshots/phase3_register.png)
 
-  ![Auth Forgot Password](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/phase3_forgot_password.png)
+  ![Auth Forgot Password](./screenshots/phase3_forgot_password.png)
 
 ---
 
@@ -96,42 +96,42 @@ This portal securely limits visibility based on active case assignments.
 
 - **Role Visibility:** If a user logs in (e.g., Respondent) and has no active cases linked to their UG ID, the dashboard is entirely neutral. If linked, they see only their specific case evidence, hearing schedules, and the 7-day response deadline countdown.
 
-  ![Participation Portal Dashboard - Logged In (Student)](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/participation_home.png)
+  ![Participation Portal Dashboard - Logged In (Student)](./screenshots/participation_home.png)
 
 ### Comprehensive Portal Exploration
 The following views demonstrate the various sections a participant (Complainant, Respondent, or Witness) can navigate to manage their involvement in a case:
 
 - **Cases:** View assigned cases and active investigations.
 
-  ![Cases](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/participation_cases.png)
+  ![Cases](./screenshots/participation_cases.png)
 - **Deadlines & Timeline:** Track the 60-day process limit and response deadlines.
 
-  ![Deadlines](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/participation_deadlines.png)
+  ![Deadlines](./screenshots/participation_deadlines.png)
 
-  ![Timeline](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/participation_timeline.png)
+  ![Timeline](./screenshots/participation_timeline.png)
 - **Communications & Notifications:** Secure inbox for committee correspondence.
 
-  ![Communications](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/participation_communications.png)
+  ![Communications](./screenshots/participation_communications.png)
 
-  ![Notifications](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/participation_notifications.png)
+  ![Notifications](./screenshots/participation_notifications.png)
 - **Hearings & Outcomes:** Monitor scheduled hearings and final decisions.
 
-  ![Hearings](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/participation_hearings.png)
+  ![Hearings](./screenshots/participation_hearings.png)
 
-  ![Outcomes](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/participation_outcomes.png)
+  ![Outcomes](./screenshots/participation_outcomes.png)
 - **Appeals:** Initiate the appeal process if unsatisfied with outcomes.
 
-  ![Appeals](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/participation_appeals.png)
+  ![Appeals](./screenshots/participation_appeals.png)
 - **Rights, Resources & Participation Details:** Educational and support material.
 
-  ![Rights](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/participation_rights.png)
+  ![Rights](./screenshots/participation_rights.png)
 
-  ![Resources](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/participation_resources.png)
+  ![Resources](./screenshots/participation_resources.png)
 
-  ![Participation Details](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/participation_participation.png)
+  ![Participation Details](./screenshots/participation_participation.png)
 - **Account:** Manage profile and security.
 
-  ![Account Profile](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/participation_account_profile.png)
+  ![Account Profile](./screenshots/participation_account_profile.png)
 
 ---
 
@@ -144,49 +144,49 @@ The administrative operational hub.
 - **Capabilities:** Allows Committee Admins (e.g., `ama.mensah@ug.edu.gh`) to view the intake queue, acknowledge reports (within 5 working days), assign investigators, and monitor the 60-day investigation timeline.
 - **Deadline Enforcement:** Overdue tasks are visibly flagged. Amber alerts appear for tight deadlines.
 
-  ![Committee Dashboard - Logged In (Staff)](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/login_staff_dashboard.png)
+  ![Committee Dashboard - Logged In (Staff)](./screenshots/login_staff_dashboard.png)
 
 ### Comprehensive Committee App Exploration
 The sidebar links provide deep administrative oversight. The following valid views were successfully audited, confirming proper routing and permissions:
 
 - **Dashboard:** Overview of metrics and active alerts.
 
-  ![Dashboard Overview](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/committee_home.png)
+  ![Dashboard Overview](./screenshots/committee_home.png)
 - **Cases:** Manage active and closed cases.
 
-  ![Cases](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/committee_cases.png)
+  ![Cases](./screenshots/committee_cases.png)
 
-  ![Closed Cases](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/committee_cases_closed.png)
+  ![Closed Cases](./screenshots/committee_cases_closed.png)
 - **Complaints:** Review incoming unassigned complaints.
 
-  ![Complaints List](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/committee_complaints.png)
+  ![Complaints List](./screenshots/committee_complaints.png)
 
-  ![New Complaints](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/committee_complaints_new.png)
+  ![New Complaints](./screenshots/committee_complaints_new.png)
 - **Hearings:** Schedule and review upcoming hearings.
 
-  ![Hearings List](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/committee_hearings.png)
+  ![Hearings List](./screenshots/committee_hearings.png)
 
-  ![Schedule Hearings](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/committee_hearings_schedule.png)
+  ![Schedule Hearings](./screenshots/committee_hearings_schedule.png)
 - **Decisions:** Record formal resolutions.
 
-  ![Decisions](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/committee_decisions.png)
+  ![Decisions](./screenshots/committee_decisions.png)
 - **Tasks:** Manage internal operational tasks.
 
-  ![Tasks List](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/committee_tasks.png)
+  ![Tasks List](./screenshots/committee_tasks.png)
 
-  ![New Task](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/committee_tasks_new.png)
+  ![New Task](./screenshots/committee_tasks_new.png)
 - **Reports & Analytics:** Platform-wide transparency data.
 
-  ![Reports](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/committee_reports.png)
+  ![Reports](./screenshots/committee_reports.png)
 
-  ![Analytics](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/committee_analytics.png)
+  ![Analytics](./screenshots/committee_analytics.png)
 - **Members & Settings:** Committee administration.
 
-  ![Members](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/committee_members.png)
+  ![Members](./screenshots/committee_members.png)
 
-  ![Add Member](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/committee_members_add.png)
+  ![Add Member](./screenshots/committee_members_add.png)
 
-  ![Settings](/Users/kaeytee/Desktop/CODES/UG-SafeSpace/screenshots/committee_settings.png)
+  ![Settings](./screenshots/committee_settings.png)
 
 ---
 
