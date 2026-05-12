@@ -20,8 +20,8 @@ echo "🔧 Generating Prisma Client..."
 npx prisma generate
 
 # Optional: Seed database (uncomment if you have seed data)
-# echo "🌱 Seeding database..."
-# npx prisma db seed
+echo "🌱 Seeding database..."
+npx prisma db seed
 
 # Start the application
 echo "✅ Starting server..."

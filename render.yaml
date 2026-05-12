@@ -9,7 +9,7 @@ services:
     plan: free
     region: oregon
     buildCommand: |
-      npm install -g pnpm && \
+      npm install -g pnpm@9 && \
       pnpm install && \
       cd backend && \
       npx prisma generate && \
