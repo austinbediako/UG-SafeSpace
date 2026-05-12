@@ -16,12 +16,12 @@ echo "📦 Running database migrations..."
 npx prisma migrate deploy
 
 # Generate Prisma Client (in case it wasn't generated during build)
-echo "🔧 Generating Prisma Client..."
-npx prisma generate
+# echo "🔧 Generating Prisma Client..."
+# npx prisma generate
 
 # Optional: Seed database (uncomment if you have seed data)
-echo "🌱 Seeding database..."
-npx prisma db seed
+# echo "🌱 Seeding database..."
+# npx prisma db seed
 
 # Start the application
 echo "✅ Starting server..."
