@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-ug-blue:        #003366;
+  --color-ug-blue-mid:    #004080;
+  --color-ug-blue-dark:   #00204d;
+  --color-ug-blue-deep:   #001a40;
+  --color-ug-blue-pale:   #e8eef5;
+  --color-ug-gold:        #c9a227;
+  --color-ug-gold-light:  #ddb84a;
+  --color-surface:        #f5f4f0;
+  --color-border:         #ddd8ce;
+  --color-text-primary:   #111827;
+  --color-text-secondary: #4b5563;
+  --color-text-muted:     #9ca3af;
+
+  --font-sans: var(--font-geist-sans);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  background: #f5f4f0;
+  color: #111827;
+  font-family: var(--font-geist-sans, Arial, sans-serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Submission loader */
+.loader {
+  position: relative;
+  border: 24px solid;
+  border-color: #fff transparent #fff transparent;
+  animation: loader-rotate 2s linear infinite;
+}
+.loader::before,
+.loader::after {
+  content: "";
+  display: block;
+  border: 24px solid transparent;
+  border-left-color: #fff;
+  position: absolute;
+  left: -24px;
+  top: -24px;
+  animation: loader-prix 1s infinite ease-in;
+  transform-origin: 0% 100%;
+}
+.loader::before {
+  border-color: transparent #fff transparent transparent;
+  transform-origin: 100% 0%;
+  animation-delay: 0.5s;
+}
+@keyframes loader-rotate {
+  100% { transform: rotate(360deg); }
+}
+@keyframes loader-prix {
+  20%, 80% { transform: rotate(0); }
+  50%       { transform: rotate(-90deg); }
+}
