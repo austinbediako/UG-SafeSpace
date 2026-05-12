@@ -634,6 +634,7 @@ export default function ReportPage() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormData>(EMPTY);
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [evidenceFiles, setEvidenceFiles] = useState<EvidenceFile[]>([]);
 
   function set<K extends keyof FormData>(key: K, value: FormData[K]) {
@@ -770,10 +771,14 @@ export default function ReportPage() {
             const suffix = form.anonymous && data.trackingToken
               ? `?anon=1&token=${encodeURIComponent(data.trackingToken)}`
               : "";
-            router.push(`/submitted/${encodeURIComponent(ref)}${suffix}`);
+            const validFileCount = evidenceFiles.filter((f) => !f.error).length;
+            const filePart = !form.anonymous && validFileCount > 0
+              ? `${suffix ? "&" : "?"}files=${validFileCount}`
+              : "";
+            router.push(`/submitted/${encodeURIComponent(ref)}${suffix}${filePart}`);
           } catch (err) {
             setLoading(false);
-            alert(err instanceof Error ? err.message : "An unexpected error occurred. Please try again.");
+            setSubmitError(err instanceof Error ? err.message : "An unexpected error occurred. Please try again.");
           }
         }}
         className="space-y-6"
@@ -1038,15 +1043,24 @@ export default function ReportPage() {
           </div>
         )}
 
+        {submitError && (
+          <div role="alert" className="flex items-start gap-3 border border-red-300 bg-red-50 px-4 py-3 text-sm">
+            <svg className="h-4 w-4 mt-0.5 flex-shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
+            </svg>
+            <span className="text-red-700">{submitError}</span>
+          </div>
+        )}
+
         <div className="flex items-center justify-between pt-4 border-t border-border">
           {step > 1 ? (
-            <button type="button" onClick={() => setStep((s) => s - 1)} className="flex items-center gap-2 px-5 py-2.5 border border-border text-sm font-bold text-text-secondary hover:border-ug-blue/40 hover:text-ug-blue transition-colors">
+            <button type="button" onClick={() => { setStep((s) => s - 1); setSubmitError(null); }} className="flex items-center gap-2 px-5 py-2.5 border border-border text-sm font-bold text-text-secondary hover:border-ug-blue/40 hover:text-ug-blue transition-colors">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
               Back
             </button>
           ) : <div />}
           {step < STEPS.length ? (
-            <button type="button" onClick={() => setStep((s) => s + 1)} className="flex items-center gap-2 px-6 py-2.5 bg-ug-blue text-white text-sm font-bold tracking-wide hover:bg-ug-blue-mid transition-colors">
+            <button type="button" onClick={() => { setStep((s) => s + 1); setSubmitError(null); }} className="flex items-center gap-2 px-6 py-2.5 bg-ug-blue text-white text-sm font-bold tracking-wide hover:bg-ug-blue-mid transition-colors">
               Continue
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
             </button>

@@ -18,6 +18,7 @@ export default function SubmittedPage() {
   const ref = params.ref as string;
   const isAnonymous = searchParams.get("anon") === "1";
   const trackingToken = searchParams.get("token");
+  const attachedFileCount = parseInt(searchParams.get("files") ?? "0", 10);
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-4 py-16">
