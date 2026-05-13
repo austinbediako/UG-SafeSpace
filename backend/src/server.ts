@@ -21,6 +21,9 @@ import analyticsRoutes from "./routes/analytics.routes.js";
 
 const app = express();
 
+// Trust proxy required for rate limiting behind a reverse proxy (e.g., Render)
+app.set("trust proxy", 1);
+
 // ─── Security Headers ─────────────────────────────────────────────────────────
 
 app.use(
