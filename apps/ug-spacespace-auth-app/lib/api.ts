@@ -17,7 +17,19 @@ async function backendFetch<T>(
     },
   });
 
-  const body = (await res.json()) as ApiResponse<T>;
+  let body: ApiResponse<T> = {};
+  const contentType = res.headers.get("content-type");
+  
+  try {
+    if (contentType && contentType.includes("application/json")) {
+      body = (await res.json()) as ApiResponse<T>;
+    } else {
+      const text = await res.text();
+      body = { error: { code: "SERVER_ERROR", message: `Unexpected response: ${text.slice(0, 50)}...` } };
+    }
+  } catch (err) {
+    console.error("Failed to parse response body", err);
+  }
 
   if (!res.ok) {
     console.error(`backendFetch error for ${path}: ${res.status} ${res.statusText}`, body);
