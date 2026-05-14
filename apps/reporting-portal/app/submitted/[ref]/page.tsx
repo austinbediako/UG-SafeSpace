@@ -146,7 +146,7 @@ export default function SubmittedPage() {
             Submit another report
           </Link>
           <a
-            href={process.env.NEXT_PUBLIC_AWARENESS_PLATFORM_URL ?? "http://localhost:3103"}
+            href={process.env.NEXT_PUBLIC_AWARENESS_PLATFORM_URL ?? "https://ug-safe-space-public-awareness-plat.vercel.app"}
             className="flex-1 inline-flex items-center justify-center gap-2 bg-[#153D6F] px-5 py-3 text-sm font-semibold text-white hover:bg-[#0e2a50] transition-colors"
           >
             Return to SafeSpace UG
