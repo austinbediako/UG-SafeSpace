@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3105";
 const AUTH_ORIGIN = process.env.NEXT_PUBLIC_AUTH_URL ?? "http://localhost:3104";
 const SESSION_COOKIE = "safespace_pp_session";
+const IS_PROD = process.env.NODE_ENV === "production";
 
 function corsHeaders() {
   return {
@@ -31,8 +32,8 @@ export async function POST(req: NextRequest) {
   const response = NextResponse.json(data, { headers: corsHeaders() });
   response.cookies.set(SESSION_COOKIE, sessionId, {
     httpOnly: true,
-    secure: process.env.HTTPS_ENABLED === "true",
-    sameSite: "none",
+    secure: IS_PROD,
+    sameSite: IS_PROD ? "none" : "lax",
     maxAge: 60 * 60 * 24 * 7, // 7 days
     path: "/",
   });

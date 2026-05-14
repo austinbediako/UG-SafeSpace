@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const AUTH_APP_URL = process.env.NEXT_PUBLIC_AUTH_URL ?? "http://localhost:3104";
 const SESSION_COOKIE = "safespace_cd_session";
+const IS_PROD = process.env.NODE_ENV === "production";
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
   const response = NextResponse.redirect(destination);
   response.cookies.set(SESSION_COOKIE, sid, {
     httpOnly: true,
-    secure: process.env.HTTPS_ENABLED === "true",
+    secure: IS_PROD,
     sameSite: "lax",
     maxAge: 60 * 60 * 24 * 7,
     path: "/",
