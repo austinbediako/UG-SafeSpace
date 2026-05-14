@@ -3,7 +3,9 @@ import { cookies } from "next/headers";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3105";
 const SESSION_COOKIE = "safespace_pp_session";
+const IS_PROD = process.env.NODE_ENV === "production";
 
+/** Fetch the current access token stored in Redis for this session. */
 async function getAccessToken(sessionId: string): Promise<string | null> {
   try {
     const res = await fetch(
@@ -15,6 +17,42 @@ async function getAccessToken(sessionId: string): Promise<string | null> {
     return accessToken ?? null;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Ask the backend to rotate tokens for this session (using the stored refresh
+ * token). Returns a fresh access token, or null if the session has truly
+ * expired (refresh token gone / revoked).
+ */
+async function refreshSession(sessionId: string): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `${BACKEND_URL}/api/v1/auth/session/refresh`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+        cache: "no-store",
+      }
+    );
+    if (!res.ok) return null;
+    // New tokens are stored back under the same sessionId in Redis.
+    // Re-fetch the updated access token.
+    return await getAccessToken(sessionId);
+  } catch {
+    return null;
+  }
+}
+
+/** Returns true when the JSON body signals a token-expired error. */
+function isTokenExpiredBody(body: string): boolean {
+  try {
+    const json = JSON.parse(body);
+    const code = json?.error?.code ?? json?.code ?? "";
+    return code === "TOKEN_EXPIRED";
+  } catch {
+    return false;
   }
 }
 
@@ -31,7 +69,7 @@ async function forwardRequest(req: NextRequest, path: string): Promise<NextRespo
     return r;
   }
 
-  const accessToken = await getAccessToken(sessionId);
+  let accessToken = await getAccessToken(sessionId);
   if (!accessToken) {
     const r = NextResponse.json(
       { error: { code: "UNAUTHORIZED", message: "Session expired or invalid" } },
@@ -45,21 +83,47 @@ async function forwardRequest(req: NextRequest, path: string): Promise<NextRespo
   const url = new URL(`/api/v1/${path}`, BACKEND_URL);
   req.nextUrl.searchParams.forEach((value, key) => url.searchParams.set(key, value));
 
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${accessToken}`,
-  };
-
+  // Read body once — streams cannot be consumed twice
   const body = ["GET", "HEAD"].includes(req.method) ? undefined : await req.text();
 
-  const backendRes = await fetch(url.toString(), {
-    method: req.method,
-    headers,
-    body,
-    cache: "no-store",
-  });
+  async function callBackend(token: string): Promise<Response> {
+    return fetch(url.toString(), {
+      method: req.method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body,
+      cache: "no-store",
+    });
+  }
 
-  const responseBody = await backendRes.text();
+  let backendRes = await callBackend(accessToken);
+  let responseBody = await backendRes.text();
+
+  // If the JWT is expired, transparently refresh and retry once.
+  if (backendRes.status === 401 && isTokenExpiredBody(responseBody)) {
+    const freshToken = await refreshSession(sessionId);
+    if (!freshToken) {
+      // Refresh token also gone — real expiry, force logout
+      const r = NextResponse.json(
+        { error: { code: "UNAUTHORIZED", message: "Session expired" } },
+        { status: 401 }
+      );
+      r.headers.set("X-Auth-Expired", "true");
+      r.cookies.set(SESSION_COOKIE, "", {
+        maxAge: 0,
+        path: "/",
+        httpOnly: true,
+        secure: IS_PROD,
+        sameSite: IS_PROD ? "none" : "lax",
+      });
+      return r;
+    }
+    // Retry with fresh token
+    backendRes = await callBackend(freshToken);
+    responseBody = await backendRes.text();
+  }
 
   return new NextResponse(responseBody, {
     status: backendRes.status,

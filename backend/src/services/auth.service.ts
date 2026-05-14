@@ -194,23 +194,96 @@ export async function refreshBySessionId(
 
   const sid: SidRecord = JSON.parse(raw);
 
-  // Blacklist old access token
-  let oldPayload: JwtPayload | null = null;
+  // Validate refresh token
+  let payload: JwtPayload;
   try {
-    oldPayload = jwt.verify(sid.accessToken, env.JWT_ACCESS_SECRET) as JwtPayload;
+    payload = jwt.verify(sid.refreshToken, env.JWT_REFRESH_SECRET) as JwtPayload;
   } catch {
-    // May already be expired — still continue to rotate
+    await redis.del(sidKey(sessionId));
+    throw new AppError(401, "INVALID_REFRESH_TOKEN", "Refresh token is invalid or expired");
   }
-  if (oldPayload) {
+
+  // Verify the session still exists in the DB
+  const dbSession = await prisma.session.findUnique({ where: { refreshToken: sid.refreshToken } });
+  if (!dbSession || dbSession.expiresAt < new Date()) {
+    await redis.del(sidKey(sessionId));
+    throw new AppError(401, "SESSION_EXPIRED", "Session has expired");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: payload.sub },
+    include: {
+      caseParticipations: {
+        where: { isActive: true },
+        select: { caseId: true, role: true },
+      },
+    },
+  });
+  if (!user || !user.isActive) {
+    throw new AppError(401, "ACCOUNT_DISABLED", "Account is disabled");
+  }
+
+  // Blacklist old access token (best-effort — it may already be expired)
+  try {
+    const oldPayload = jwt.verify(sid.accessToken, env.JWT_ACCESS_SECRET) as JwtPayload;
     const accessTtl = parseExpiry(env.JWT_ACCESS_EXPIRY);
     await redis.set(blacklistKey(oldPayload.jti), "1", "EX", accessTtl);
+  } catch {
+    // Already expired — nothing to blacklist
   }
 
-  // Delete the sid record and delegate to normal refresh flow
-  await redis.del(sidKey(sessionId));
+  // Rotate the DB refresh-token record
+  await prisma.session.delete({ where: { id: dbSession.id } });
+  const newTokens = await generateTokenPair(user.id, user.systemRole, user.email);
+  await prisma.session.create({
+    data: {
+      userId: user.id,
+      refreshToken: newTokens.refreshToken,
+      expiresAt: new Date(Date.now() + parseExpiry(env.JWT_REFRESH_EXPIRY) * 1000),
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    },
+  });
 
-  return refreshTokens(sid.refreshToken, meta);
+  // Build session info
+  const expiresAt = new Date(Date.now() + parseExpiry(env.JWT_REFRESH_EXPIRY) * 1000);
+  const session: SessionInfo = {
+    userId: user.id,
+    email: user.email,
+    role: user.systemRole,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    caseParticipations: user.caseParticipations,
+    expiresAt: expiresAt.toISOString(),
+  };
+
+  // ─── KEY FIX: write new tokens back under the SAME sessionId ────────────────
+  // The browser cookie holds this sessionId. If we generate a new one (as
+  // buildSession does), the cookie becomes stale and every subsequent request
+  // fails with SESSION_NOT_FOUND → logout loop.
+  const newSidRecord: SidRecord = {
+    accessToken: newTokens.accessToken,
+    refreshToken: newTokens.refreshToken,
+    userId: user.id,
+  };
+  await redis.set(
+    sidKey(sessionId),
+    JSON.stringify(newSidRecord),
+    "EX",
+    parseExpiry(env.JWT_REFRESH_EXPIRY)
+  );
+
+  // Also refresh the user-level session cache
+  await redis.set(
+    sessionKey(user.id),
+    JSON.stringify(session),
+    "EX",
+    parseExpiry(env.JWT_REFRESH_EXPIRY)
+  );
+
+  return { sessionId, session };
 }
+
 
 /**
  * Return the stored access token for a given sessionId.
