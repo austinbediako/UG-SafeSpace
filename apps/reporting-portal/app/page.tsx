@@ -635,14 +635,17 @@ export default function ReportPage() {
   const [form, setForm] = useState<FormData>(EMPTY);
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [stepError, setStepError] = useState<string | null>(null);
   const [evidenceFiles, setEvidenceFiles] = useState<EvidenceFile[]>([]);
 
   function set<K extends keyof FormData>(key: K, value: FormData[K]) {
     setForm((f) => ({ ...f, [key]: value }));
+    setStepError(null);
   }
 
   const addFiles = useCallback((incoming: FileList | null) => {
     if (!incoming) return;
+    setStepError(null);
     const next: EvidenceFile[] = Array.from(incoming).map((file) => {
       if (!ALLOWED_MIME_TYPES.has(file.type))
         return { file, error: "File type not accepted." };
@@ -657,6 +660,72 @@ export default function ReportPage() {
   const removeFile = useCallback((index: number) => {
     setEvidenceFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
+
+  const handleContinue = () => {
+    setStepError(null);
+
+    // ── Step 1: Your Role ────────────────────────────────────────────────────
+    if (step === 1) {
+      if (!form.role) {
+        setStepError("Please select your role at UG before continuing.");
+        return;
+      }
+      if (!form.reportType) {
+        setStepError("Please choose a report type (Formal or Informal).");
+        return;
+      }
+      // Non-anonymous reporters must provide a student/staff ID
+      if (!form.anonymous && !form.complainantId.trim()) {
+        setStepError("Please enter your Student / Staff ID, or tick the anonymous checkbox to omit your identity.");
+        return;
+      }
+    }
+
+    // ── Step 2: Incident Details ─────────────────────────────────────────────
+    if (step === 2) {
+      if (!form.misconductType) {
+        setStepError("Please select the type of misconduct.");
+        return;
+      }
+      if (!form.incidentDate) {
+        setStepError("Please enter the date of the incident.");
+        return;
+      }
+      if (!form.incidentLocation.trim()) {
+        setStepError("Please enter the location where the incident occurred.");
+        return;
+      }
+      if (form.description.trim().length < 10) {
+        setStepError(
+          `Please describe what happened in at least 10 characters (currently ${form.description.trim().length}).`
+        );
+        return;
+      }
+    }
+
+    // ── Step 3: The Respondent ───────────────────────────────────────────────
+    if (step === 3) {
+      if (!form.respondentName.trim()) {
+        setStepError("Please provide the respondent's name or any identifier you know (e.g. a nickname, username, or title).");
+        return;
+      }
+      if (!form.respondentDepartment.trim()) {
+        setStepError("Please enter the respondent's department or unit. If unknown, write \"Unknown\".");
+        return;
+      }
+      if (!form.relationship) {
+        setStepError("Please select your relationship to the respondent.");
+        return;
+      }
+    }
+
+    // ── Step 4: Supporting Info ──────────────────────────────────────────────
+    // No required fields on this step — all are optional (witnesses, files, prior reports, evidence description).
+    // priorReports defaults to "no" so it is always set.
+
+    setStep(s => s + 1);
+    setSubmitError(null);
+  };
 
   if (loading) {
     return (
@@ -730,6 +799,18 @@ export default function ReportPage() {
               "External / Visitor": "EXTERNAL",
             };
 
+            // Map respondent role label → Affiliation enum
+            const RESPONDENT_AFFILIATION_ENUM: Record<string, string> = {
+              "Faculty member / Lecturer": "FACULTY",
+              "Teaching assistant": "FACULTY",
+              "Administrative staff": "ADMINISTRATIVE_STAFF",
+              "Student (same level)": "UNDERGRADUATE",
+              "Student (different level)": "UNDERGRADUATE",
+              "External contractor/visitor": "EXTERNAL",
+              "Unknown / not sure": "EXTERNAL",
+              "Prefer not to say": "EXTERNAL",
+            };
+
             const payload = {
               reportType: form.reportType === "formal" ? "FORMAL" : "INFORMAL",
               misconductType: MISCONDUCT_ENUM[form.misconductType] ?? "OTHER",
@@ -740,10 +821,10 @@ export default function ReportPage() {
               incidentDate: form.incidentDate || undefined,
               incidentLocation: form.incidentLocation || undefined,
               incidentDescription: form.description,
-              respondentName: form.respondentName || "Not provided",
+              respondentName: form.respondentName,
               respondentStudentStaffId: form.respondentId || undefined,
-              respondentDepartment: form.respondentDepartment || "Not provided",
-              respondentAffiliation: form.respondentRole || "Unknown",
+              respondentDepartment: form.respondentDepartment,
+              respondentAffiliation: RESPONDENT_AFFILIATION_ENUM[form.respondentRole] ?? "EXTERNAL",
               respondentRelationship: form.relationship || undefined,
               witnessInformation: form.witnesses || undefined,
               priorReportMade: form.priorReports !== "no",
@@ -760,8 +841,10 @@ export default function ReportPage() {
 
             const data = await res.json();
             if (!res.ok) {
-              const message =
-                data?.error?.message ?? data?.error ?? data?.message ?? "Submission failed. Please try again.";
+              let message = data?.error?.message ?? data?.error ?? data?.message ?? "Submission failed. Please try again.";
+              if (data?.error?.details && Array.isArray(data.error.details)) {
+                message += ": " + data.error.details.map((d: any) => `${d.field} (${d.message})`).join(", ");
+              }
               throw new Error(message);
             }
 
@@ -1043,8 +1126,17 @@ export default function ReportPage() {
           </div>
         )}
 
+        {stepError && (
+          <div role="alert" className="flex items-start gap-3 border border-red-300 bg-red-50 px-4 py-3 text-sm mt-4">
+            <svg className="h-4 w-4 mt-0.5 flex-shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
+            </svg>
+            <span className="text-red-700">{stepError}</span>
+          </div>
+        )}
+
         {submitError && (
-          <div role="alert" className="flex items-start gap-3 border border-red-300 bg-red-50 px-4 py-3 text-sm">
+          <div role="alert" className="flex items-start gap-3 border border-red-300 bg-red-50 px-4 py-3 text-sm mt-4">
             <svg className="h-4 w-4 mt-0.5 flex-shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
             </svg>
@@ -1052,15 +1144,15 @@ export default function ReportPage() {
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-4 border-t border-border">
+        <div className="flex items-center justify-between pt-4 border-t border-border mt-4">
           {step > 1 ? (
-            <button type="button" onClick={() => { setStep((s) => s - 1); setSubmitError(null); }} className="flex items-center gap-2 px-5 py-2.5 border border-border text-sm font-bold text-text-secondary hover:border-ug-blue/40 hover:text-ug-blue transition-colors">
+            <button type="button" onClick={() => { setStep((s) => s - 1); setSubmitError(null); setStepError(null); }} className="flex items-center gap-2 px-5 py-2.5 border border-border text-sm font-bold text-text-secondary hover:border-ug-blue/40 hover:text-ug-blue transition-colors">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
               Back
             </button>
           ) : <div />}
           {step < STEPS.length ? (
-            <button type="button" onClick={() => { setStep((s) => s + 1); setSubmitError(null); }} className="flex items-center gap-2 px-6 py-2.5 bg-ug-blue text-white text-sm font-bold tracking-wide hover:bg-ug-blue-mid transition-colors">
+            <button type="button" onClick={handleContinue} className="flex items-center gap-2 px-6 py-2.5 bg-ug-blue text-white text-sm font-bold tracking-wide hover:bg-ug-blue-mid transition-colors">
               Continue
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
             </button>
